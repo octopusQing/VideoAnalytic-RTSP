@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30309.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "videoAnalytics-rtsp", "videoAnalytics-rtsp\videoAnalytics-rtsp.pyproj", "{EB82EDFD-6995-4CB0-899D-A32EE49BB573}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EB82EDFD-6995-4CB0-899D-A32EE49BB573}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB82EDFD-6995-4CB0-899D-A32EE49BB573}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F6D72328-E7A5-4205-B312-3ACD7767289E}
+	EndGlobalSection
+EndGlobal
