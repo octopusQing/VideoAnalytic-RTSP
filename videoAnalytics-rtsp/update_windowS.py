@@ -29,7 +29,9 @@ def update_windowS(pathIn='',   #raw frame保存地址
                    ground_configration=None,   #k个中选一个最佳为次优的ground truth？
                    cover_thre=None,   #object覆盖度阈值
                    f1_thre=None,    #根据每帧分析的f1值，来确定该帧是否为准确帧
-                   pipe=None   #输出视频流的pipe
+                   pipe=None,   #输出视频流的pipe
+                   analyseConfigration=None,
+                   lock=None
                    ): 
 
 
@@ -59,7 +61,7 @@ def update_windowS(pathIn='',   #raw frame保存地址
 
      #获取window中每个segment的最佳（1个）configration
      #过渡：将不返回configration
-     leader_configration=update_windowT(leader_pathIn,start_frameW,end_frameW,segment_time,knob_values,k,fps,profile_time,ground_configration,configrationW,isLeader,cost,cover_thre,f1_thre,pipe)
+     leader_configration=update_windowT(leader_pathIn,start_frameW,end_frameW,segment_time,knob_values,k,fps,profile_time,ground_configration,configrationW,isLeader,cost,analyseConfigration,cover_thre,f1_thre,pipe,lock)
      result_configration=[]
      result_configration.append(leader_configration)
      

@@ -6,6 +6,9 @@ import cv2
 import argparse
 from profile import *
 from yolo_video import * 
+from videoAnalytics_rtsp import * 
+
+
 
 def update_windowT(source_path='',  #输入视频(raw)帧本地路径
                  start_frameW='',
@@ -19,9 +22,11 @@ def update_windowT(source_path='',  #输入视频(raw)帧本地路径
                  configrationW=None,#该 window的k个configration
                  isLeader=None,
                  cost=None,
+                 analyseConfigration=None,
                  cover_thre=None,
                  f1_thre=None,
                  pipe=None,
+                 lock=None
                 ): 
 
      i=0
@@ -43,7 +48,6 @@ def update_windowT(source_path='',  #输入视频(raw)帧本地路径
      if isLeader==1:
          #第一个segment的最佳configration即为configrationW的第0个
          configration.append(configrationW[0])
-         ###执行yolo_video
 
          #segment的起始帧、结束帧
          start_frameS=start_frameW
@@ -52,13 +56,25 @@ def update_windowT(source_path='',  #输入视频(raw)帧本地路径
             end_frameS=end_frameW
                
          #获取configration中各knob的具体值
-         frame_rate=configrationW[0][0]
-         image_W=configrationW[0][1][0]  
-         image_H=configrationW[0][1][1]
-           
-         yolo_video(source_path,start_frameS,end_frameS,frame_rate,image_H,image_W,inputFps,pipe)
-              
-
+         if start_frameS%4>2:
+             frame_rate=5
+             image_W=1200 
+             image_H=720
+         else:
+             frame_rate=configrationW[0][0]
+             image_W=configrationW[0][1][0]  
+             image_H=configrationW[0][1][1]
+         #更新analyseConfigration
+         lock.acquire()
+         analyseConfigration[0]=frame_rate
+         analyseConfigration[1][0]=image_W
+         analyseConfigration[1][1]=image_H
+         lock.release()
+         #setAnalyseConfigration(frame_rate,image_W,image_H)
+         print("\n第",start_frameS,"-",end_frameS,"帧的segment的configration:",frame_rate,image_W,image_H,"\n") 
+         
+         #yolo_video(source_path,start_frameS,end_frameS,frame_rate,image_H,image_W,inputFps,pipe)
+     
 
 
 
@@ -117,8 +133,16 @@ def update_windowT(source_path='',  #输入视频(raw)帧本地路径
           frame_rate=configrationS[0]   
           image_W=configrationS[1][0]  
           image_H=configrationS[1][1]
-          print("该segment的configration",configrationS) 
-          yolo_video(source_path,start_frameS,end_frameS,frame_rate,image_H,image_W,inputFps,pipe)
+          print("\n第",start_frameS,"-",end_frameS,"帧的segment的configration:",frame_rate,image_W,image_H,"\n") 
+
+          #更新analyseConfigration
+          lock.acquire()
+          analyseConfigration[0]=frame_rate
+          analyseConfigration[1][0]=image_W
+          analyseConfigration[1][1]=image_H
+          lock.release()
+          #setAnalyseConfigration(frame_rate,image_W,image_H)
+          #yolo_video(source_path,start_frameS,end_frameS,frame_rate,image_H,image_W,inputFps,pipe)
           ##################
 
           configration.append(configrationS)

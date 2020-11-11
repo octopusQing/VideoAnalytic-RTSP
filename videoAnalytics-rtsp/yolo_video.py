@@ -63,32 +63,44 @@ def yolo_video(pathIn='',  #输入视频文件的路径
             if k>=end_frame:
               break
 
-            frame0=cv2.imread(pathIn+'/frame'+str(k)+'.jpg')
-            
             # 获取帧的尺寸
             #if W is None or H is None:
             #    (H,W)=frame0.shape[:2]
 
-            # 调整图片大小
-            frame = cv2.resize(frame0, (int(image_W), int(image_H)), interpolation=cv2.INTER_AREA)  
             
-            filePath=path+"/frame"+str(k)+".jpg"
-              
-            #分析结果保存本地，并返回
+            ##分析结果保存本地，并返回
+            # 调整图片大小
+            #frame0=cv2.imread(pathIn+'/frame'+str(k)+'.jpg')
+            #frame = cv2.resize(frame0, (int(image_W), int(image_H)), interpolation=cv2.INTER_AREA)  
+            #filePath=path+"/frame"+str(k)+".jpg"
             #result_image=performDetectImage(frame,filePath)
             
-            #不写入本地
-            result_image=performDetectImage(frame)
+            ##不写入本地
+            # 调整图片大小
+            #frame0=cv2.imread(pathIn+'/frame'+str(k)+'.jpg')
+            #frame = cv2.resize(frame0, (int(image_W), int(image_H)), interpolation=cv2.INTER_AREA)  
+            #result_image=performDetectImage(frame)
 
-            #main.pipe.stdin.write(result_image.tobyte())  # 存入管道用于直播
-            
-
+            '''
             sendback_frame = cv2.resize(result_image, (int(1200), int(720)), interpolation=cv2.INTER_AREA)  
 
             text="No."+str(k)+" frame    " +str(image_W)+"x"+str(image_H) +"    timeF: " +str(timeF)
             cv2.putText(sendback_frame, text, (50, 50), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0, 0, 0), 2)
 
             pipe.stdin.write(sendback_frame.tostring())
+            '''
+
+
+
+            ##不写入本地，analyse完直接推流，非采样帧不分析，直接采用上一分析帧结果
+            reSize=(int(image_W), int(image_H))
+            #path:source图片存储路径；第k个帧需要分析；k后面的timeF-1个帧采用第k的检测结果；reSize调整分辨率后再分析；pipe推流管道
+            result_image=performDetectImageAndStream(pathIn,k,timeF,reSize,pipe)
+
+            #main.pipe.stdin.write(result_image.tobyte())  # 存入管道用于直播
+            
+
+
 
             #进入待回传列表
             #addBackImage(filePath,result_image)

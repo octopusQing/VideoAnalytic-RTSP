@@ -649,7 +649,106 @@ def performBatchDetect1(image=None,filePath='',batch_size=1, thresh= 0.25, confi
     #  return label_location_list   
     return detect_result
 
-def performDetectImage(image=None,filePath='',batch_size=1, thresh= 0.25, configPath = "./cfg/yolov3.cfg", weightPath = "yolov3.weights", metaPath= "./cfg/coco.data", hier_thresh=.5, nms=.45):
+
+def performDetectImageAndStream(inputPath=None,k=None,timeF=None,reSize=None,pipe=None,batch_size=1, thresh= 0.25, configPath = "./cfg/yolov3.cfg", weightPath = "yolov3.weights", 
+                       metaPath= "./cfg/coco.data", hier_thresh=.5, nms=.45):
+    import cv2
+    import numpy as np
+    # NB! Image sizes should be the same
+    # You can change the images, yet, be sure that they have the same width and height
+    global net,meta 
+
+    #img_samples = ['data/dog.jpg']
+    # image_list = [cv2.imread(k) for k in img_samples]
+    i=k
+    BackImage_list=[]
+    while i<k+timeF:
+        frame0=cv2.imread(inputPath+'/frame'+str(i)+'.jpg')
+        BackImage_list.append(cv2.resize(frame0,reSize, interpolation=cv2.INTER_AREA) )
+        i=i+1
+            
+    image_list=[BackImage_list[0]]
+
+    if net is None:
+       net = load_net_custom(configPath.encode('utf-8'), weightPath.encode('utf-8'), 0, batch_size)
+    if meta is None:
+       meta = load_meta(metaPath.encode('utf-8'))
+
+    #原图片大小
+    source_height, source_width, c = image_list[0].shape
+
+    
+    pred_height, pred_width, c = image_list[0].shape
+    net_width, net_height = (network_width(net), network_height(net))
+    img_list = []
+    for custom_image_bgr in image_list:
+        custom_image = cv2.cvtColor(custom_image_bgr, cv2.COLOR_BGR2RGB)
+        custom_image = cv2.resize(
+            custom_image, (net_width, net_height), interpolation=cv2.INTER_NEAREST)
+        custom_image = custom_image.transpose(2, 0, 1)
+        img_list.append(custom_image)
+
+    arr = np.concatenate(img_list, axis=0)
+    arr = np.ascontiguousarray(arr.flat, dtype=np.float32) / 255.0
+    data = arr.ctypes.data_as(POINTER(c_float))
+    im = IMAGE(net_width, net_height, c, data)
+    
+    #time1=time.time()
+    batch_dets = network_predict_batch(net, im, batch_size, pred_width,
+                                                pred_height, thresh, hier_thresh, None, 0, 0)
+    #time2=time.time()
+    #print("time:",time2-time1)
+
+    for b in range(batch_size):
+        num = batch_dets[b].num
+        dets = batch_dets[b].dets
+        if nms:
+            do_nms_obj(dets, num, meta.classes, nms)
+       
+        for i in range(num):
+            det = dets[i]
+            score = -1
+            label = None
+            for c in range(det.classes):
+                p = det.prob[c]
+                if p > score:
+                    score = p
+                    label = c
+            if score > thresh:
+                box = det.bbox
+                left, top, right, bottom = map(int,(box.x - box.w / 2, box.y - box.h / 2,
+                                            box.x + box.w / 2, box.y + box.h / 2))
+                
+                boxColor = (int(255 * (1 - (score ** 2))), int(255 * (score ** 2)), 0)
+                cv2.rectangle(image_list[b], (left, top),(right, bottom), boxColor, 2)
+
+                #未采样帧
+                i=k+1
+                while i<k+timeF:
+                    cv2.rectangle(BackImage_list[i-k], (left, top),(right, bottom), boxColor, 2)
+                    i=i+1
+
+
+        i=k
+        while i<k+timeF:
+           sendback_frame = cv2.resize(BackImage_list[i-k], (int(1200), int(720)), interpolation=cv2.INTER_AREA)  # 待调整
+           text="No."+str(i)+" frame    " +str(reSize[0]) +"x"+str(reSize[1])+"    sampleRate: " +str(timeF)
+           cv2.putText(sendback_frame, text, (50, 50), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0, 0, 0), 2)
+           pipe.stdin.write(sendback_frame.tostring())
+           #if i<50:
+              # cv2.imwrite("./result_imgs"+'/frame'+str(i)+'.jpg',sendback_frame)
+           i=i+1
+ 
+    free_batch_detections(batch_dets, batch_size)
+
+    return image_list[0]
+
+
+
+
+
+def performDetectImage(image=None,filePath='',batch_size=1, thresh= 0.25, configPath = "./cfg/yolov3.cfg", weightPath = "yolov3.weights", 
+                       metaPath= "./cfg/coco.data", hier_thresh=.5, nms=.45):
     import cv2
     import numpy as np
     # NB! Image sizes should be the same
